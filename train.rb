@@ -22,7 +22,11 @@ class Train
   end
 
   def braking(speed_decrease = self.speed)
-    self.speed -= speed_decrease if self.speed >= speed_decrease
+    if self.speed > speed_decrease
+      self.speed -= speed_decrease
+    else
+      self.speed = 0
+    end
   end
 
   def attach_wagon
