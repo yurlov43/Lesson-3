@@ -8,7 +8,7 @@ class Station
   end
 
   def take_train(train)
-    trains << train if train.station == self
+    trains << train if train.current_station == self
   end
 
   def trains_by_type

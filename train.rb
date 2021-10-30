@@ -1,8 +1,8 @@
 class Train
   attr_accessor :speed
   attr_accessor :number_wagons
-  attr_accessor :station
   attr_accessor :route
+  attr_accessor :current_index
   attr_reader :number
   attr_reader :type
 
@@ -14,80 +14,72 @@ class Train
   end
 
   def accelerate(speed_gain = 10)
-    if self.speed + speed_gain <= 70
-      self.speed += speed_gain
-    else
+    self.speed + speed_gain <= 70 ?
+      self.speed += speed_gain :
       self.speed = 70
-    end
   end
 
   def braking(speed_decrease = self.speed)
-    if self.speed > speed_decrease
-      self.speed -= speed_decrease
-    else
+    self.speed > speed_decrease ?
+      self.speed -= speed_decrease :
       self.speed = 0
-    end
   end
 
   def attach_wagon
-    self.number_wagons += 1 \
-      if self.number_wagons <= 99 && self.speed == 0
+    self.number_wagons += 1 if self.number_wagons <= 99 && self.speed == 0
   end
 
   def unhook_wagon
-    self.number_wagons -= 1 \
-      if self.number_wagons >= 1 && self.speed == 0
+    self.number_wagons -= 1 if self.number_wagons >= 1 && self.speed == 0
   end
 
   def add_route(route)
     self.route = route
-    self.station = self.route.start_station
-    self.station.take_train(self)
+    self.current_index = 0
+    self.route.stations.first.take_train(self)
     nil
   end
 
+  def current_station
+    self.route.stations.flatten[current_index]
+  end
+
+  def previous_station
+    previous_index = current_index - 1
+    self.route.stations.flatten[previous_index] if previous_index >= 0
+  end
+
+  def next_station
+    self.route.stations.flatten[current_index + 1]
+  end
+
   def position_in_route
-    current_index = self.route.stations.flatten.index(self.station)
+    puts "\tStation: #{previous_station.title} " <<
+           "- previous station" unless previous_station.nil?
+    puts "\tStation: #{current_station.title} - current position"
+    puts "\tStation: #{next_station.title} " <<
+           "- next station" unless next_station.nil?
+  end
 
-    if self.station == self.route.start_station
-      puts "\tStation: #{self.route.start_station.title} << Route start"
+  def move_back
+    if previous_station.nil?
+      puts "The beginning of the route. There are no stations behind."
     else
-      puts "\tStation: #{self.route.stations.flatten[current_index - 1].title} << Previous station"
-    end
-
-    if self.station != self.route.start_station &&
-      self.station != self.route.end_station
-      puts "\tStation: #{self.station.title} << Current position"
-    end
-
-    if self.station == self.route.end_station
-      puts "\tStation: #{self.route.end_station.title} << End station"
-    else
-      puts "\tStation: #{self.route.stations.flatten[current_index + 1].title} << next station"
+      current_station.send_train(self)
+      self.current_index -= 1
+      current_station.take_train(self)
+      puts "The train returned to the station: #{current_station.title}"
     end
   end
 
   def moving_forward
-    current_index = self.route.stations.flatten.index(self.station)
-    if self.station == self.route.end_station
+    if next_station.nil?
       puts "End of the route. There are no stations ahead."
     else
-      self.station.send_train(self)
-      self.station = self.route.stations.flatten[current_index + 1]
-      self.station.take_train(self)
-      puts "The train arrived at the station: #{self.station.title}"
-    end
-  end
-
-  def move_back
-    current_index = self.route.stations.flatten.index(self.station)
-    if self.station == self.route.start_station
-      puts "The beginning of the route. There are no stations behind."
-    else
-      self.station.send_train(self)
-      self.station = self.route.stations.flatten[current_index - 1]
-      self.station.take_train(self)
-      puts "The train returned to the station: #{self.station.title}"
+      current_station.send_train(self)
+      self.current_index += 1
+      current_station.take_train(self)
+      puts "The train arrived at the station: #{current_station.title}"
     end
   end
 end
